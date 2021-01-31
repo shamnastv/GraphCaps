@@ -110,7 +110,8 @@ class GraphDataset():
                         if len(id_to_attri_maps) <= attri_idx_all:
                             id_to_attri_maps.append([])
                             attri_to_id_maps.append(dict())
-                        print(attri)
+                        print(graph_file)
+                        print(nodes)
                         if attri in set(id_to_attri_maps[attri_idx_all]):
                             continue
                         else:
