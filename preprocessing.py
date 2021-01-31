@@ -89,7 +89,7 @@ class GraphDataset():
         num_edge = []
         num_node = []
         for graph_idx, graph_file in enumerate(graphs_dataset):
-            graph = nx.read_gexf(graph_file)
+            graph = nx.read_gexf(graph_file, version='1.2draft')
             num_edge.append(graph.number_of_edges())
             num_node.append(len(graph))
             attri_idx = 0
