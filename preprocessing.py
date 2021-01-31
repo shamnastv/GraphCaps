@@ -89,7 +89,7 @@ class GraphDataset():
         num_edge = []
         num_node = []
         for graph_idx, graph_file in enumerate(graphs_dataset):
-            graph = nx.read_gexf(graph_file, version='1.2draft')
+            graph = nx.read_gexf(graph_file)
             num_edge.append(graph.number_of_edges())
             num_node.append(len(graph))
             attri_idx = 0
@@ -110,8 +110,6 @@ class GraphDataset():
                         if len(id_to_attri_maps) <= attri_idx_all:
                             id_to_attri_maps.append([])
                             attri_to_id_maps.append(dict())
-                        print(graph_file)
-                        print(nodes)
                         if attri in set(id_to_attri_maps[attri_idx_all]):
                             continue
                         else:
