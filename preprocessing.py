@@ -33,7 +33,7 @@ def node_attri():
 def settings():
     parser = argparse.ArgumentParser("Data_Preprocessing")
 
-    parser.add_argument("--dataset_input_dir", type=str, default="gexf_files/ENZYMES",
+    parser.add_argument("--dataset_input_dir", type=str, default="graph_gexf/ENZYMES",
                         help="Where gexf dataset is stored.")
     parser.add_argument("--output_data_dir", type=str, default="data_plk/", help="Where output dataset is stored.")
     parser.add_argument("--pickle_v", type=int, default=3, help="version of pickle.")
