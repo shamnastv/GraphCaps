@@ -59,26 +59,17 @@ class Model(nn.Module):
             self.gcn_layers.append(GCN(hidden_dim, hidden_dim))
 
     def _init_capsules(self):
-        # self.first_capsule = PrimaryCapsuleLayer(in_units=self.args.gcn_filters, in_channels=self.args.gcn_layers,
-        #                                          num_units=self.args.gcn_layers,
-        #                                          capsule_dimensions=self.args.capsule_dimensions)
 
         self.graph_capsule = SecondaryCapsuleLayer(self.num_gcn_channels * self.args.num_gcn_layers,
                                                    self.args.node_embedding_size, self.args.num_graph_capsules,
                                                    self.args.graph_embedding_size, self.device)
-
         self.class_capsule = SecondaryCapsuleLayer(self.args.num_graph_capsules, self.args.graph_embedding_size,
                                                    self.num_classes, 16, self.device)
 
     def _init_reconstruction_layers(self):
-        self.reconstruction_layer_1 = nn.Linear(16,
-                                                int((self.gcn_input_dim * 2) / 3))
-
-        self.reconstruction_layer_2 = nn.Linear(int((self.gcn_input_dim * 2) / 3),
-                                                int((self.gcn_input_dim * 3) / 2))
-
-        self.reconstruction_layer_3 = nn.Linear(int((self.gcn_input_dim * 3) / 2),
-                                                self.recon_dim)
+        self.reconstruction_layer_1 = nn.Linear(16, int((self.gcn_input_dim * 2) / 3))
+        self.reconstruction_layer_2 = nn.Linear(int((self.gcn_input_dim * 2) / 3), int((self.gcn_input_dim * 3) / 2))
+        self.reconstruction_layer_3 = nn.Linear(int((self.gcn_input_dim * 3) / 2), self.recon_dim)
 
     def forward(self, adj, node_inputs, label, reconstructs):
         args = self.args

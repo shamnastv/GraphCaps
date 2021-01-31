@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-class SecondaryCapsuleLayer(torch.nn.Module):
+class SecondaryCapsuleLayer(nn.Module):
     """
     Secondary Convolutional Capsule Layer class based on this repostory:
     https://github.com/timomernick/pytorch-capsule
@@ -22,7 +22,6 @@ class SecondaryCapsuleLayer(torch.nn.Module):
         self.in_channels = in_channels
         self.out_channels = out_channels
         self.out_dim = out_dim
-        # self.W = torch.nn.Parameter(torch.randn(1, in_channels, num_units, unit_size, in_units))
         self.W = torch.nn.Parameter(torch.randn(1, 1, in_channels, out_channels, in_dim, out_dim), requires_grad=True)
 
     @staticmethod
@@ -64,7 +63,7 @@ class SecondaryCapsuleLayer(torch.nn.Module):
             c_ij = F.softmax(b_ij, dim=1)
             # c_ij = torch.cat([c_ij] * batch_size, dim=0).unsqueeze(4)
             # print(number_of_nodes.shape)
-            s_j = (c_ij * u_hat).sum(dim=1, keepdim=True)/number_of_nodes   # b x 1 x co x d
+            s_j = (c_ij * u_hat).sum(dim=1, keepdim=True)   # b x 1 x co x d
             v_j, a_j = SecondaryCapsuleLayer.squash(s_j)  # b x 1 x co x d
 
             v_j1 = torch.cat([v_j] * n * self.in_channels, dim=1)  # b x n*ci x co x d
