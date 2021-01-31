@@ -116,7 +116,7 @@ def main():
         test(args, model, gd.graphs_dataset_train, gd, 'train')
         test(args, model, gd.graphs_dataset_valid, gd, 'val')
         test(args, model, gd.graphs_dataset_test, gd, 'test')
-        print('')
+        print('', flush=True)
 
 
 if __name__ == '__main__':
