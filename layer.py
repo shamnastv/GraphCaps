@@ -38,9 +38,10 @@ class SecondaryCapsuleLayer(torch.nn.Module):
         s = a_j * (s / mag)
         return s, a_j
 
-    def forward(self, x):
+    def forward(self, x, number_of_nodes):
         """
         Forward propagation pass.
+        :param number_of_nodes:
         :param x: Input features.
         :return : Capsule output.
         """
@@ -62,7 +63,8 @@ class SecondaryCapsuleLayer(torch.nn.Module):
         for _ in range(num_iterations):
             c_ij = F.softmax(b_ij, dim=1)
             # c_ij = torch.cat([c_ij] * batch_size, dim=0).unsqueeze(4)
-            s_j = (c_ij * u_hat).sum(dim=1, keepdim=True)   # b x 1 x co x d
+            # print(number_of_nodes.shape)
+            s_j = (c_ij * u_hat).sum(dim=1, keepdim=True)/number_of_nodes   # b x 1 x co x d
             v_j, a_j = SecondaryCapsuleLayer.squash(s_j)  # b x 1 x co x d
 
             v_j1 = torch.cat([v_j] * n * self.in_channels, dim=1)  # b x n*ci x co x d

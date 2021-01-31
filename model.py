@@ -88,6 +88,7 @@ class Model(nn.Module):
             features.append(self.embeddings[i](node_inputs[i]))
 
         masks = torch.max(adj, dim=-1, keepdim=True)[0]
+        number_of_nodes = torch.sum(masks, dim=1, keepdim=True).float().unsqueeze(3)
 
         b, n, _ = adj.shape
         c = self.num_gcn_channels
@@ -115,9 +116,9 @@ class Model(nn.Module):
         # rescaled_first_capsule_output = rescaled_capsule_output.view(-1, self.args.gcn_layers,
         #                                                              self.args.capsule_dimensions)
 
-        graph_capsule_output, a_j = self.graph_capsule(hidden_representations)
+        graph_capsule_output, a_j = self.graph_capsule(hidden_representations, number_of_nodes)
 
-        class_capsule_output, a_j = self.class_capsule(graph_capsule_output)
+        class_capsule_output, a_j = self.class_capsule(graph_capsule_output, 1.0)
         class_capsule_output = class_capsule_output.squeeze()
 
         loss, margin_loss, reconstruction_loss, pred = self.calculate_loss(args, class_capsule_output, label,
