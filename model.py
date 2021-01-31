@@ -98,6 +98,8 @@ class Model(nn.Module):
         hidden_representations = []
         for layer in self.gcn_layers:
             features = layer(adj_norm, features)
+            features = torch.tanh(features)
+            features = torch.dropout(features)
             hidden_representations.append(features.reshape(b, n, c, -1))
 
         hidden_representations = torch.cat(hidden_representations, dim=2)  # b x n x c x d
