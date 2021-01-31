@@ -54,7 +54,9 @@ def test(args, model, dataset, gd, split):
         preds.append(pred.detach().cpu())
     labels = torch.cat(labels)
     preds = torch.cat(preds)
-    print(split, 'accuracy', accuracy_score(labels.numpy(), preds.numpy()))
+    accuracy = accuracy_score(labels.numpy(), preds.numpy())
+    print(split, 'accuracy', accuracy)
+    return accuracy
 
 
 def main():
@@ -110,12 +112,20 @@ def main():
     gd.graphs_dataset_valid = groups_dict['val']
     gd.graphs_dataset_test = groups_dict['test']
 
+    max_val_acc = 0
+    max_test_acc = 0
+    max_eopch = 0
     for epoch in range(1, args.epochs+1):
         print('Epoch :', epoch, 'Time', int(time.time() - start_time))
         train(args, model, optimizer, gd.graphs_dataset_train, gd)
-        test(args, model, gd.graphs_dataset_train, gd, 'train')
-        test(args, model, gd.graphs_dataset_valid, gd, 'val')
-        test(args, model, gd.graphs_dataset_test, gd, 'test')
+        train_acc = test(args, model, gd.graphs_dataset_train, gd, 'train')
+        val_acc = test(args, model, gd.graphs_dataset_valid, gd, 'val')
+        test_acc = test(args, model, gd.graphs_dataset_test, gd, 'test')
+        if max_val_acc <= val_acc:
+            max_val_acc = val_acc
+            max_test_acc = test_acc
+            max_eopch = epoch
+        print('max val :', max_val_acc, 'test :', max_test_acc, 'epoch :', max_eopch)
         print('', flush=True)
 
 
