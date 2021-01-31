@@ -59,6 +59,8 @@ def test(args, model, dataset, gd, split):
 
 def main():
     parser = argparse.ArgumentParser("GraphClassification")
+    parser.add_argument('--device', type=int, default=0,
+                        help='which gpu to use if any (default: 0)')
     parser.add_argument("--dataset_dir", type=str, default="data_plk/ENZYMES", help="Where dataset is stored.")
     parser.add_argument("--epochs", type=int, default=3000, help="epochs")
     parser.add_argument("--batch_size", type=int, default=32, help="batch_size")
