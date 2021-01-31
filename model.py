@@ -1,26 +1,24 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import scipy.sparse as sp
 import numpy as np
-from torch_geometric.nn import GCNConv
 
 from attention import Attention
-from layer import PrimaryCapsuleLayer, SecondaryCapsuleLayer, GCN
+from layer import SecondaryCapsuleLayer, GCN
 from util import normalize_adj
 
 epsilon = 1e-11
 
 
-def to_torch(adj, node_inputs, label, reconstructs):
-    adj = torch.from_numpy(adj).float()
+def to_torch(adj, node_inputs, label, reconstructs, device):
+    adj = torch.from_numpy(adj).float().to(device)
     tmp = []
     for a in node_inputs:
-        tmp.append(torch.tensor(a).long())
+        tmp.append(torch.tensor(a).long().to(device))
 
     node_inputs = tmp
-    label = torch.tensor(label).long()
-    reconstructs = torch.tensor(reconstructs).float()
+    label = torch.tensor(label).long().to(device)
+    reconstructs = torch.tensor(reconstructs).float().to(device)
     return adj, node_inputs, label, reconstructs
 
 
@@ -64,11 +62,12 @@ class Model(nn.Module):
         #                                          num_units=self.args.gcn_layers,
         #                                          capsule_dimensions=self.args.capsule_dimensions)
 
-        self.graph_capsule = SecondaryCapsuleLayer(self.num_gcn_channels * self.args.num_gcn_layers, self.args.node_embedding_size,
-                                                   self.args.num_graph_capsules, self.args.graph_embedding_size)
+        self.graph_capsule = SecondaryCapsuleLayer(self.num_gcn_channels * self.args.num_gcn_layers,
+                                                   self.args.node_embedding_size, self.args.num_graph_capsules,
+                                                   self.args.graph_embedding_size, self.device)
 
         self.class_capsule = SecondaryCapsuleLayer(self.args.num_graph_capsules, self.args.graph_embedding_size,
-                                                   self.num_classes, 16)
+                                                   self.num_classes, 16, self.device)
 
     def _init_reconstruction_layers(self):
         self.reconstruction_layer_1 = nn.Linear(16,
@@ -83,7 +82,7 @@ class Model(nn.Module):
     def forward(self, adj, node_inputs, label, reconstructs):
         args = self.args
 
-        adj, node_inputs, label, reconstructs = to_torch(adj, node_inputs, label, reconstructs)
+        adj, node_inputs, label, reconstructs = to_torch(adj, node_inputs, label, reconstructs, self.device)
         features = []
         for i, att in enumerate(self.num_features):
             features.append(self.embeddings[i](node_inputs[i]))
@@ -121,12 +120,16 @@ class Model(nn.Module):
         class_capsule_output, a_j = self.class_capsule(graph_capsule_output)
         class_capsule_output = class_capsule_output.squeeze()
 
-        loss, margin_loss, reconstruction_loss, pred = self.calculate_loss(args, class_capsule_output, label, reconstructs)
+        loss, margin_loss, reconstruction_loss, pred = self.calculate_loss(args, class_capsule_output, label,
+                                                                           reconstructs)
         return class_capsule_output, loss, margin_loss, reconstruction_loss, label, pred
 
     def calculate_loss(self, args, capsule_input, target, reconstructs):
         """
         Calculating the reconstruction loss of the model.
+        :param reconstructs:
+        :param target:
+        :param args:
         :param capsule_input: Output of class capsule.
         :param features: Feature matrix.
         :return reconstrcution_loss: Loss of reconstruction.
@@ -140,14 +143,14 @@ class Model(nn.Module):
         v_mag = torch.sqrt((capsule_input ** 2).sum(dim=2))
         pred = v_mag.max(dim=1)[1]
 
-        zero = torch.zeros(1)
-        m_plus = torch.tensor(0.9)
-        m_minus = torch.tensor(0.1)
+        zero = torch.zeros(1, device=self.device)
+        m_plus = torch.tensor(0.9, device=self.device)
+        m_minus = torch.tensor(0.1, device=self.device)
         max_l = torch.max(m_plus - v_mag, zero) ** 2
         max_r = torch.max(v_mag - m_minus, zero) ** 2
 
-        T_c = torch.zeros(batch_size, num_class)
-        T_c[torch.arange(batch_size), target] = 1
+        T_c = torch.zeros(batch_size, num_class, device=self.device)
+        T_c[torch.arange(batch_size, device=self.device), target] = 1
         L_c = T_c * max_l + args.lambda_val * (1.0 - T_c) * max_r
         L_c = L_c.sum(dim=1)
         margin_loss = L_c.mean()
@@ -161,12 +164,12 @@ class Model(nn.Module):
         capsule_masked = capsule_input * T_c
         capsule_masked = capsule_masked.sum(dim=1)
 
-        reconstruction_output = torch.nn.functional.relu(self.reconstruction_layer_1(capsule_masked))
-        reconstruction_output = torch.nn.functional.relu(self.reconstruction_layer_2(reconstruction_output))
+        reconstruction_output = F.relu(self.reconstruction_layer_1(capsule_masked))
+        reconstruction_output = F.relu(self.reconstruction_layer_2(reconstruction_output))
         reconstruction_output = torch.sigmoid(self.reconstruction_layer_3(reconstruction_output))
 
         neg_indicator = torch.where(reconstructs < 1e-5, torch.ones(reconstructs.shape),
-                                 torch.zeros(reconstructs.shape))
+                                    torch.zeros(reconstructs.shape, device=self.device))
         pos_indicator = 1 - neg_indicator
         reconstructs_max = torch.max(reconstructs, dim=1, keepdim=True)[0]
         reconstruct_value = reconstructs / (reconstructs_max + epsilon)

@@ -11,13 +11,17 @@ from sklearn.metrics import accuracy_score, f1_score, classification_report
 from GraphDataset import GraphDataset
 from model import Model
 
+start_time = time.time()
+
 
 def train(args, model, optimizer, dataset, gd):
     model.train()
     one_epoch = 0
-    labels = []
-    preds = []
+    # labels = []
+    # preds = []
 
+    gd.files_shuffle()
+    loss_accum = 0
     while one_epoch == 0:
         attri_descriptors, adj_mats, label, reconstructs, one_epoch = gd.data_gen(dataset, args.batch_size)
         attri_descriptors = list(zip(*attri_descriptors))
@@ -26,15 +30,31 @@ def train(args, model, optimizer, dataset, gd):
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
-        labels.append(label.detach())
-        preds.append(pred.detach())
+        # labels.append(label.detach())
+        # preds.append(pred.detach())
+        loss_accum += loss.detach().cpu().item()
+    # labels = torch.cat(labels)
+    # preds = torch.cat(preds)
+    print('loss', loss_accum)
+
+
+def test(args, model, dataset, gd, split):
+
+    model.eval()
+    one_epoch = 0
+    labels = []
+    preds = []
+    while one_epoch == 0:
+        attri_descriptors, adj_mats, label, reconstructs, one_epoch = gd.data_gen(dataset, args.batch_size)
+        attri_descriptors = list(zip(*attri_descriptors))
+        with torch.no_grad():
+            class_capsule_output, loss, margin_loss, reconstruction_loss, label, pred = model(
+                adj_mats, attri_descriptors, label, reconstructs)
+        labels.append(label.detach().cpu())
+        preds.append(pred.detach().cpu())
     labels = torch.cat(labels)
     preds = torch.cat(preds)
-    print(classification_report(labels.numpy(), preds.numpy()))
-
-
-def test(model, dataset, split):
-    pass
+    print(split, 'accuracy', accuracy_score(labels.numpy(), preds.numpy()))
 
 
 def main():
@@ -76,7 +96,7 @@ def main():
     gd = GraphDataset(input_dir=args.dataset_dir, extn=extn, class_label_fname=class_labels_fname)
     gd.print_status()
 
-    model = Model(args, gd.attri_len, gd.num_classes, gd.reconstruct_num, device)
+    model = Model(args, gd.attri_len, gd.num_classes, gd.reconstruct_num, device).to(device)
     optimizer = optim.Adam(model.parameters(), args.lr)
     print(model)
 
@@ -88,11 +108,13 @@ def main():
     gd.graphs_dataset_valid = groups_dict['val']
     gd.graphs_dataset_test = groups_dict['test']
 
-    for i in range(args.epochs):
+    for epoch in range(1, args.epochs+1):
+        print('Epoch :', epoch, 'Time', int(time.time() - start_time))
         train(args, model, optimizer, gd.graphs_dataset_train, gd)
-        test(model, gd.graphs_dataset_train, 'train')
-        test(model, gd.graphs_dataset_valid, 'val')
-        test(model, gd.graphs_dataset_test, 'test')
+        test(args, model, gd.graphs_dataset_train, gd, 'train')
+        test(args, model, gd.graphs_dataset_valid, gd, 'val')
+        test(args, model, gd.graphs_dataset_test, gd, 'test')
+        print('')
 
 
 if __name__ == '__main__':
