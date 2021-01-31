@@ -168,7 +168,7 @@ class Model(nn.Module):
         reconstruction_output = F.relu(self.reconstruction_layer_2(reconstruction_output))
         reconstruction_output = torch.sigmoid(self.reconstruction_layer_3(reconstruction_output))
 
-        neg_indicator = torch.where(reconstructs < 1e-5, torch.ones(reconstructs.shape),
+        neg_indicator = torch.where(reconstructs < 1e-5, torch.ones(reconstructs.shape, device=self.device),
                                     torch.zeros(reconstructs.shape, device=self.device))
         pos_indicator = 1 - neg_indicator
         reconstructs_max = torch.max(reconstructs, dim=1, keepdim=True)[0]
