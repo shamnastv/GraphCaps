@@ -45,6 +45,7 @@ class Model(nn.Module):
         self._init_gcn(args)
         self._init_capsules()
         self._init_reconstruction_layers()
+        self.dropout = nn.Dropout(.5)
 
     def _init_gcn(self, args):
         self.gcn_layers = nn.ModuleList()
@@ -99,7 +100,7 @@ class Model(nn.Module):
         for layer in self.gcn_layers:
             features = layer(adj_norm, features)
             features = torch.tanh(features)
-            features = torch.dropout(features)
+            features = self.dropout(features)
             hidden_representations.append(features.reshape(b, n, c, -1))
 
         hidden_representations = torch.cat(hidden_representations, dim=2)  # b x n x c x d
