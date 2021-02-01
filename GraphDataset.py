@@ -17,11 +17,14 @@ class GraphDataset():
                                open(class_label_fname, 'r')}
         self.num_classes = len(set(self.graph_to_label.values()))
         self.node_index = {}
-        self.scan(graphs_dataset)
+        self._scan(graphs_dataset)
         self.graphs_dataset = graphs_dataset
         self.graph_read_index = 0
+        self.graphs_dataset_train = None
+        self.graphs_dataset_valid = None
+        self.graphs_dataset_test = None
 
-    def scan(self, graphs_dataset):
+    def _scan(self, graphs_dataset):
         for graph_file in graphs_dataset:
             with open(graph_file, 'rb') as f:
                 graph = pickle.load(f)

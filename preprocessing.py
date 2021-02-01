@@ -58,7 +58,7 @@ class GraphDataset():
         self.class_label_fname = class_label_fname
         self.num_classes = len(set(self.graph_to_label.values()))
         self.node_index = {}
-        self.scan(graphs_dataset)
+        self._scan(graphs_dataset)
         self.graphs_dataset = graphs_dataset
         self.graph_read_index = 0
         self.graph_read_index_test = 0
@@ -71,7 +71,7 @@ class GraphDataset():
         with open(ofname, 'wb') as f:
             pickle.dump(data_frame, f, protocol=pickle_v)
 
-    def scan(self, graphs_dataset):
+    def _scan(self, graphs_dataset):
         """
         Collect graph dataset info
         :param graphs_dataset:
@@ -123,7 +123,8 @@ class GraphDataset():
                     degree_max = degree
 
             if graph_idx % 10 == 0:
-                print("Scaned file :----------------------- {}%".format(graph_idx * 100.0 / len(graphs_dataset)))
+                print("Scanned file :----------------------- {}%".format(graph_idx * 100.0 / len(graphs_dataset)),
+                      flush=True)
         num_edge = np.array(num_edge)
         print("Average number of edges: {}".format(np.average(num_edge)))
         print("Average number of nodes: {}".format(np.average(np.array(num_node))))
@@ -237,7 +238,7 @@ class GraphDataset():
                 with open(ofname, 'wb') as f:
                     pickle.dump(data_frame, f, protocol=pickle_v)
             if graph_idx % 10 == 0:
-                print("processed file : {}%".format(graph_idx * 100.0 / len(self.graphs_dataset)))
+                print("processed file : {}%".format(graph_idx * 100.0 / len(self.graphs_dataset)), flush=True)
 
         if save:
             shutil.copy(self.class_label_fname, self.dataset_output_dir + '.Labels')
