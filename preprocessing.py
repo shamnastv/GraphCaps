@@ -1,4 +1,6 @@
 import argparse, os, shutil, scipy
+import json
+
 import numpy as np
 import networkx as nx
 import scipy.sparse as sp
@@ -325,6 +327,14 @@ class GraphDataset():
             pickle.dump(train_test_split, f, protocol=pickle_v)
 
 
+def get_graph_structure(dataset_input_dir):
+    dataset = os.path.basename(dataset_input_dir)
+    with open('graph_structure.json') as json_file:
+        data = json.load(json_file)
+
+    return data[dataset]
+
+
 if __name__ == '__main__':
     FLAGS = settings()
     dataset_input_dir = FLAGS.dataset_input_dir
@@ -336,8 +346,10 @@ if __name__ == '__main__':
     if not os.path.exists(dataset_output_dir):
         os.mkdir(dataset_output_dir)
 
+    graph_structure = get_graph_structure(dataset_input_dir)
+    print(graph_structure)
     gd = GraphDataset(dataset_input_dir, extn='gexf', class_label_fname=class_label_fname,
-                      dataset_output_dir=dataset_output_dir, attri_dict=node_attri())
+                      dataset_output_dir=dataset_output_dir, attri_dict=graph_structure)
     gd.print_status()
     graph_name = gd.data_gen(pickle_v=pickle_v, save=True)
     if FLAGS.gen_split_file:

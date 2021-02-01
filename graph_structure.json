@@ -1,0 +1,36 @@
+{
+  "ENZYMES" : {
+    "Label": {
+      "channel": 1,
+      "if_input": true,
+      "if_reconst": true
+    },
+    "degree": {
+      "channel": 1,
+      "if_input": true,
+      "if_reconst": true
+    },
+    "constant": {
+      "channel": 1,
+      "if_input": true,
+      "if_reconst": false
+    }
+  },
+   "REDDIT-MULTI-5K" : {
+    "label": {
+      "channel": 1,
+      "if_input": true,
+      "if_reconst": true
+    },
+    "degree": {
+      "channel": 1,
+      "if_input": true,
+      "if_reconst": true
+    },
+    "constant": {
+      "channel": 1,
+      "if_input": true,
+      "if_reconst": false
+    }
+  }
+}
