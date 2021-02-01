@@ -11,7 +11,7 @@ def node_attri():
     :return:
     """
     attri_name = {
-        'Label': {
+        'label': {
             'channel': 1,
             'if_input': True,
             'if_reconst': True
