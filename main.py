@@ -5,7 +5,6 @@ import time
 import torch
 import numpy as np
 from torch import optim
-import torch.nn.functional as F
 from sklearn.metrics import accuracy_score, f1_score, classification_report
 
 from GraphDataset import GraphDataset
@@ -68,10 +67,14 @@ def main():
     parser.add_argument("--batch_size", type=int, default=32, help="batch_size")
     parser.add_argument("--iterations", type=int, default=3, help="number of iterations of dynamic routing")
     parser.add_argument("--seed", type=int, default=12345, help="Initial random seed")
-    parser.add_argument('-node_emb_size', "--node_embedding_size", default=8, type=int,
+    parser.add_argument("--node_embedding_size", default=8, type=int,
                         help="Intended subgraph embedding size to be learnt")
-    parser.add_argument('-graph_emb_size', "--graph_embedding_size", default=8, type=int,
+    parser.add_argument("--graph_embedding_size", default=8, type=int,
                         help="Intended graph embedding size to be learnt")
+    parser.add_argument("--num_gcn_channels", default=2, type=int,
+                        help="Number of channels at each layer")
+    parser.add_argument("--num_gcn_layers", default=5, type=int,
+                        help="Number of GCN layers")
     parser.add_argument("--lr", default=0.001, type=float,
                         help="Learning rate to optimize the loss function")
     parser.add_argument("--decay_step", default=20000, type=float, help="Learning rate decay step")

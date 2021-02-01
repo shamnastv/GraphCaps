@@ -37,19 +37,16 @@ class Model(nn.Module):
             self.embeddings.append(nn.Embedding(d, args.node_embedding_size))
 
         self.gcn_input_dim = args.node_embedding_size * len(num_features)
-        self.num_gcn_channels = 2
-        args.num_gcn_layers = 5
-        self.graph_embd_str = [16]
 
-        self.attention = Attention(args.node_embedding_size * self.num_gcn_channels * args.num_gcn_layers)
+        self.attention = Attention(args.node_embedding_size * args.num_gcn_channels * args.num_gcn_layers)
         self._init_gcn(args)
-        self._init_capsules()
-        self._init_reconstruction_layers()
-        self.dropout = nn.Dropout(.5)
+        self._init_capsules(args)
+        self._init_reconstruction_layers(args)
+        self.dropout = nn.Dropout(.3)
 
     def _init_gcn(self, args):
         self.gcn_layers = nn.ModuleList()
-        hidden_dim = args.node_embedding_size * self.num_gcn_channels
+        hidden_dim = args.node_embedding_size * args.num_gcn_channels
         # self.gcn_layers.append(GCNConv(self.gcn_input_dim, hidden_dim))
         # for _ in range(args.num_gcn_layers - 1):
         #     self.gcn_layers.append(GCNConv(hidden_dim, hidden_dim))
@@ -58,16 +55,16 @@ class Model(nn.Module):
         for _ in range(args.num_gcn_layers - 1):
             self.gcn_layers.append(GCN(hidden_dim, hidden_dim))
 
-    def _init_capsules(self):
+    def _init_capsules(self, args):
 
-        self.graph_capsule = SecondaryCapsuleLayer(self.num_gcn_channels * self.args.num_gcn_layers,
-                                                   self.args.node_embedding_size, self.args.num_graph_capsules,
-                                                   self.args.graph_embedding_size, self.device)
-        self.class_capsule = SecondaryCapsuleLayer(self.args.num_graph_capsules, self.args.graph_embedding_size,
-                                                   self.num_classes, 16, self.device)
+        self.graph_capsule = SecondaryCapsuleLayer(args.num_gcn_channels * args.num_gcn_layers,
+                                                   args.node_embedding_size, args.num_graph_capsules,
+                                                   args.graph_embedding_size, self.device)
+        self.class_capsule = SecondaryCapsuleLayer(args.num_graph_capsules, args.graph_embedding_size,
+                                                   self.num_classes, args.graph_embedding_size, self.device)
 
-    def _init_reconstruction_layers(self):
-        self.reconstruction_layer_1 = nn.Linear(16, int((self.gcn_input_dim * 2) / 3))
+    def _init_reconstruction_layers(self, args):
+        self.reconstruction_layer_1 = nn.Linear(args.graph_embedding_size, int((self.gcn_input_dim * 2) / 3))
         self.reconstruction_layer_2 = nn.Linear(int((self.gcn_input_dim * 2) / 3), int((self.gcn_input_dim * 3) / 2))
         self.reconstruction_layer_3 = nn.Linear(int((self.gcn_input_dim * 3) / 2), self.recon_dim)
 
@@ -77,13 +74,15 @@ class Model(nn.Module):
         adj, node_inputs, label, reconstructs = to_torch(adj, node_inputs, label, reconstructs, self.device)
         features = []
         for i, att in enumerate(self.num_features):
-            features.append(self.embeddings[i](node_inputs[i]))
+            feat = self.embeddings[i](node_inputs[i])
+            feat = self.dropout(feat)
+            features.append(feat)
 
         masks = torch.max(adj, dim=-1, keepdim=True)[0]
         number_of_nodes = torch.sum(masks, dim=1, keepdim=True).float().unsqueeze(-1)
 
         b, n, _ = adj.shape
-        c = self.num_gcn_channels
+        c = args.num_gcn_channels
         # edge_index = (adj > 0).nonzero().t()
         adj_norm = normalize_adj(adj)
         features = torch.cat(features, dim=-1)  # b x n x c*d
