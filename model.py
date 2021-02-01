@@ -80,7 +80,7 @@ class Model(nn.Module):
             features.append(self.embeddings[i](node_inputs[i]))
 
         masks = torch.max(adj, dim=-1, keepdim=True)[0]
-        number_of_nodes = torch.sum(masks, dim=1, keepdim=True).float().unsqueeze(3)
+        number_of_nodes = torch.sum(masks, dim=1, keepdim=True).float().unsqueeze(-1)
 
         b, n, _ = adj.shape
         c = self.num_gcn_channels
@@ -100,8 +100,7 @@ class Model(nn.Module):
         attn = self.attention(hidden_representations.reshape(b, n, -1))
 
         attn = F.softmax(attn.masked_fill(masks.eq(0), -np.inf), dim=1).unsqueeze(-1)
-        num_nodes = torch.sum(masks, dim=1, keepdim=True).unsqueeze(-1)
-        hidden_representations = hidden_representations * attn * num_nodes  # b x n x c x d
+        hidden_representations = hidden_representations * attn * number_of_nodes  # b x n x c x d
 
         # first_capsule_output = self.first_capsule(hidden_representations)
         # first_capsule_output = first_capsule_output.view(-1, self.args.gcn_layers * self.args.capsule_dimensions)
