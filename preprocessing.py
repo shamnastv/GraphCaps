@@ -106,7 +106,7 @@ class GraphDataset():
                         if attri is None:
                             attri = 'None'
                             if attri_name != 'constant':
-                                print('"None" appears !!')
+                                print(attri_name, '"None" appears !!')
                         if len(id_to_attri_maps) <= attri_idx_all:
                             id_to_attri_maps.append([])
                             attri_to_id_maps.append(dict())
