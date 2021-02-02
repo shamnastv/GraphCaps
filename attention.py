@@ -4,7 +4,7 @@ import torch.nn.functional as F
 
 
 class Attention(nn.Module):
-    def __init__(self, input_dim, hidden_dim=None, output_dim=1, num_layers=2, activation=F.leaky_relu):
+    def __init__(self, input_dim, hidden_dim=None, output_dim=1, num_layers=2, activation=torch.tanh):
         super(Attention, self).__init__()
 
         self.num_layers = num_layers
@@ -13,7 +13,7 @@ class Attention(nn.Module):
         # self.batch_norms = torch.nn.ModuleList()
 
         if hidden_dim is None:
-            hidden_dim = input_dim
+            hidden_dim = int(input_dim / 16) + 4
 
         if num_layers < 1:
             raise ValueError("number of layers should be positive!")

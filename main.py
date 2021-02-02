@@ -34,7 +34,8 @@ def train(args, model, optimizer, dataset, gd):
         loss_accum += loss.detach().cpu().item()
     # labels = torch.cat(labels)
     # preds = torch.cat(preds)
-    print('loss', loss_accum)
+    # print('loss', loss_accum)
+    return loss_accum
 
 
 def test(args, model, dataset, gd, split):
@@ -54,7 +55,7 @@ def test(args, model, dataset, gd, split):
     labels = torch.cat(labels)
     preds = torch.cat(preds)
     accuracy = accuracy_score(labels.numpy(), preds.numpy())
-    print(split, 'accuracy', accuracy)
+    # print(split, 'accuracy', accuracy)
     return accuracy
 
 
@@ -119,11 +120,14 @@ def main():
     max_test_acc = 0
     max_eopch = 0
     for epoch in range(1, args.epochs+1):
-        print('Epoch :', epoch, 'Time', int(time.time() - start_time))
-        train(args, model, optimizer, gd.graphs_dataset_train, gd)
+        loss_accum = train(args, model, optimizer, gd.graphs_dataset_train, gd)
+        print('Epoch : ', epoch, 'loss training: ', loss_accum, 'Time : ', int(time.time() - start_time))
+
         train_acc = test(args, model, gd.graphs_dataset_train, gd, 'train')
         val_acc = test(args, model, gd.graphs_dataset_valid, gd, 'val')
         test_acc = test(args, model, gd.graphs_dataset_test, gd, 'test')
+        print("accuracy train: %f val: %f test: %f" % (train_acc, val_acc, test_acc), flush=True)
+
         if max_val_acc <= val_acc:
             max_val_acc = val_acc
             max_test_acc = test_acc
