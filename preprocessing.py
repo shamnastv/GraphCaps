@@ -7,31 +7,6 @@ import scipy.sparse as sp
 import pickle, random
 
 
-def node_attri():
-    """
-    define the input and reconstruct graph info
-    :return:
-    """
-    attri_name = {
-        'label': {
-            'channel': 1,
-            'if_input': True,
-            'if_reconst': True
-        },
-        'degree': {
-            'channel': 1,
-            'if_input': True,
-            'if_reconst': True
-        },
-        'constant': {
-            'channel': 1,
-            'if_input': True,
-            'if_reconst': False
-        },
-    }
-    return attri_name
-
-
 def settings():
     parser = argparse.ArgumentParser("Data_Preprocessing")
 
