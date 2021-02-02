@@ -333,7 +333,10 @@ def get_graph_structure(dataset_input_dir):
     with open('graph_structure.json') as json_file:
         data = json.load(json_file)
 
-    return data[dataset]
+    if dataset in data:
+        return data[dataset]
+    else:
+        return data['General']
 
 
 if __name__ == '__main__':
