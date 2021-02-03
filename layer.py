@@ -63,7 +63,7 @@ class SecondaryCapsuleLayer(nn.Module):
             c_ij = F.softmax(b_ij, dim=1)
             # c_ij = torch.cat([c_ij] * batch_size, dim=0).unsqueeze(4)
             # print(number_of_nodes.shape)
-            s_j = (c_ij * u_hat).sum(dim=1, keepdim=True)   # b x 1 x co x d
+            s_j = (c_ij * u_hat).sum(dim=1, keepdim=True)/number_of_nodes   # b x 1 x co x d
             v_j, a_j = SecondaryCapsuleLayer.squash(s_j)  # b x 1 x co x d
 
             v_j1 = torch.cat([v_j] * n * self.in_channels, dim=1)  # b x n*ci x co x d
@@ -76,7 +76,6 @@ class SecondaryCapsuleLayer(nn.Module):
 class GCN(torch.nn.Module):
     def __init__(self, input_dim, output_dim):
         super(GCN, self).__init__()
-
         self.linear1 = nn.Linear(input_dim, output_dim)
 
     def forward(self, adj, x):
