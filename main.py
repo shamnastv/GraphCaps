@@ -101,39 +101,49 @@ def main():
     extn = '.gexf'
     class_labels_fname = args.dataset_dir + '.Labels'
     train_test_split_file = args.dataset_dir + '_train_test_split'
+
     gd = GraphDataset(input_dir=args.dataset_dir, extn=extn, class_label_fname=class_labels_fname)
     gd.print_status()
-
-    model = Model(args, gd.attri_len, gd.num_classes, gd.reconstruct_num, device).to(device)
-    optimizer = optim.Adam(model.parameters(), args.lr)
-    print(model)
 
     with open(train_test_split_file, 'rb') as f:
         train_test_split_groups = pickle.load(f)
 
-    groups_dict = train_test_split_groups[0]
-    gd.graphs_dataset_train = groups_dict['train']
-    gd.graphs_dataset_valid = groups_dict['val']
-    gd.graphs_dataset_test = groups_dict['test']
+    test_accuracies = []
+    for train_test_split_groups_idx, groups_dict in enumerate(train_test_split_groups):
 
-    max_val_acc = 0
-    max_test_acc = 0
-    max_eopch = 0
-    for epoch in range(1, args.epochs+1):
-        loss_accum = train(args, model, optimizer, gd.graphs_dataset_train, gd)
-        print('Epoch : ', epoch, 'loss training: ', loss_accum, 'Time : ', int(time.time() - start_time))
+        model = Model(args, gd.attri_len, gd.num_classes, gd.reconstruct_num, device).to(device)
+        optimizer = optim.Adam(model.parameters(), args.lr)
+        print(model)
+        groups_dict = train_test_split_groups[train_test_split_groups_idx]
+        gd.graphs_dataset_train = groups_dict['train']
+        gd.graphs_dataset_valid = groups_dict['val']
+        gd.graphs_dataset_test = groups_dict['test']
 
-        train_acc = test(args, model, gd.graphs_dataset_train, gd, 'train')
-        val_acc = test(args, model, gd.graphs_dataset_valid, gd, 'val')
-        test_acc = test(args, model, gd.graphs_dataset_test, gd, 'test')
-        print("accuracy train: %f val: %f test: %f" % (train_acc, val_acc, test_acc), flush=True)
+        max_val_acc = 0
+        max_test_acc = 0
+        max_eopch = 0
+        for epoch in range(1, args.epochs+1):
+            loss_accum = train(args, model, optimizer, gd.graphs_dataset_train, gd)
 
-        if max_val_acc <= val_acc:
-            max_val_acc = val_acc
-            max_test_acc = test_acc
-            max_eopch = epoch
-        print('max val :', max_val_acc, 'test :', max_test_acc, 'epoch :', max_eopch)
-        print('', flush=True)
+            train_acc = test(args, model, gd.graphs_dataset_train, gd, 'train')
+            val_acc = test(args, model, gd.graphs_dataset_valid, gd, 'val')
+            test_acc = test(args, model, gd.graphs_dataset_test, gd, 'test')
+
+            if max_val_acc <= val_acc:
+                max_val_acc = val_acc
+                max_test_acc = test_acc
+                max_eopch = epoch
+
+            if epoch % 10 == 0:
+                print('Epoch : ', epoch, 'loss training: ', loss_accum, 'Time : ', int(time.time() - start_time))
+                print("accuracy train: %f val: %f test: %f" % (train_acc, val_acc, test_acc), flush=True)
+                print('max val :', max_val_acc, 'test :', max_test_acc, 'epoch :', max_eopch)
+                print('', flush=True)
+
+        test_accuracies.append(max_test_acc)
+
+    print(test_accuracies)
+    print('avg :', sum(test_accuracies) / len(test_accuracies))
 
 
 if __name__ == '__main__':
