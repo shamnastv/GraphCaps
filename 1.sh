@@ -6,5 +6,5 @@
 #SBATCH --gres=gpu:1
 #SBATCH --partition=cl2_48h-1G
 
-python3 main.py
+python3 main.py --seed 11
 
