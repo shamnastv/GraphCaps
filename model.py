@@ -118,15 +118,6 @@ class Model(nn.Module):
         return class_capsule_output, loss, margin_loss, reconstruction_loss, label, pred
 
     def calculate_loss(self, args, capsule_input, target, reconstructs):
-        """
-        Calculating the reconstruction loss of the model.
-        :param reconstructs:
-        :param target:
-        :param args:
-        :param capsule_input: Output of class capsule.
-        :param features: Feature matrix.
-        :return reconstrcution_loss: Loss of reconstruction.
-        """
 
         input_shape = capsule_input.shape
         batch_size = input_shape[0]

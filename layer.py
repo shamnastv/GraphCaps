@@ -5,18 +5,11 @@ import torch.nn.functional as F
 
 class SecondaryCapsuleLayer(nn.Module):
     """
-    Secondary Convolutional Capsule Layer class based on this repostory:
-    https://github.com/timomernick/pytorch-capsule
+    ref https://github.com/timomernick/pytorch-capsule
     """
 
     def __init__(self, in_channels, in_dim, out_channels, out_dim, device):
         super(SecondaryCapsuleLayer, self).__init__()
-        """
-        :param in_units: Number of input units (GCN layers).
-        :param in_channels: Number of channels.
-        :param num_units: Number of capsules.
-        :param capsule_dimensions: Number of neurons in capsule.
-        """
         self.device = device
         self.in_dim = in_dim
         self.in_channels = in_channels
@@ -26,11 +19,6 @@ class SecondaryCapsuleLayer(nn.Module):
 
     @staticmethod
     def squash(s):
-        """
-        Squash activations.
-        :param s: Signal.
-        :return s: Activated signal.
-        """
         mag_sq = torch.sum(s ** 2, dim=3, keepdim=True)
         mag = torch.sqrt(mag_sq) + 1e-11
         a_j = mag_sq / (1.0 + mag_sq)
@@ -38,12 +26,6 @@ class SecondaryCapsuleLayer(nn.Module):
         return s, a_j
 
     def forward(self, x, number_of_nodes):
-        """
-        Forward propagation pass.
-        :param number_of_nodes:
-        :param x: Input features.
-        :return : Capsule output.
-        """
         input_shape = x.size()  # b x n x c x d
         batch_size = input_shape[0]
         n = input_shape[1]
@@ -63,7 +45,7 @@ class SecondaryCapsuleLayer(nn.Module):
             c_ij = F.softmax(b_ij, dim=1)
             # c_ij = torch.cat([c_ij] * batch_size, dim=0).unsqueeze(4)
             # print(number_of_nodes.shape)
-            s_j = (c_ij * u_hat).sum(dim=1, keepdim=True)/number_of_nodes   # b x 1 x co x d
+            s_j = (c_ij * u_hat).sum(dim=1, keepdim=True)   # b x 1 x co x d
             v_j, a_j = SecondaryCapsuleLayer.squash(s_j)  # b x 1 x co x d
 
             v_j1 = torch.cat([v_j] * n * self.in_channels, dim=1)  # b x n*ci x co x d
