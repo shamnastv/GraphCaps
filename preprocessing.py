@@ -6,6 +6,10 @@ import networkx as nx
 import scipy.sparse as sp
 import pickle, random
 
+"""
+ref https://github.com/XinyiZ001/CapsGNN
+"""
+
 
 def settings():
     parser = argparse.ArgumentParser("Data_Preprocessing")

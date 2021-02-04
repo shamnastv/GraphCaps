@@ -3,6 +3,10 @@ import numpy as np
 import networkx as nx
 import pickle
 
+"""
+ref https://github.com/XinyiZ001/CapsGNN
+"""
+
 
 class GraphDataset():
     def __init__(self, input_dir, extn, class_label_fname):
