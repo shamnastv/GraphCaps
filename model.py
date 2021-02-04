@@ -47,9 +47,6 @@ class Model(nn.Module):
     def _init_gcn(self, args):
         self.gcn_layers = nn.ModuleList()
         hidden_dim = args.node_embedding_size * args.num_gcn_channels
-        # self.gcn_layers.append(GCNConv(self.gcn_input_dim, hidden_dim))
-        # for _ in range(args.num_gcn_layers - 1):
-        #     self.gcn_layers.append(GCNConv(hidden_dim, hidden_dim))
 
         self.gcn_layers.append(GCN(self.gcn_input_dim, hidden_dim))
         for _ in range(args.num_gcn_layers - 1):
@@ -65,8 +62,7 @@ class Model(nn.Module):
 
     def _init_reconstruction_layers(self, args):
         self.reconstruction_layer_1 = nn.Linear(args.graph_embedding_size, int((self.gcn_input_dim * 2) / 3))
-        # self.reconstruction_layer_2 = nn.Linear(int((self.gcn_input_dim * 2) / 3), int((self.gcn_input_dim * 3) / 2))
-        self.reconstruction_layer_3 = nn.Linear(int((self.gcn_input_dim * 2) / 3), self.recon_dim)
+        self.reconstruction_layer_2 = nn.Linear(int((self.gcn_input_dim * 2) / 3), self.recon_dim)
 
     def forward(self, adj, node_inputs, label, reconstructs):
         args = self.args
@@ -94,19 +90,11 @@ class Model(nn.Module):
             hidden_representations.append(features.reshape(b, n, c, -1))
 
         hidden_representations = torch.cat(hidden_representations, dim=2)  # b x n x c x d
-        # hidden_representations = hidden_representations.view(1, self.args.gcn_layers, self.args.gcn_filters, -1)
 
         attn = self.attention(hidden_representations.reshape(b, n, -1))
 
         attn = F.softmax(attn.masked_fill(masks.eq(0), -np.inf), dim=1).unsqueeze(-1)
         hidden_representations = hidden_representations * attn * number_of_nodes  # b x n x c x d
-
-        # first_capsule_output = self.first_capsule(hidden_representations)
-        # first_capsule_output = first_capsule_output.view(-1, self.args.gcn_layers * self.args.capsule_dimensions)
-        #
-        # rescaled_capsule_output = self.attention(first_capsule_output)
-        # rescaled_first_capsule_output = rescaled_capsule_output.view(-1, self.args.gcn_layers,
-        #                                                              self.args.capsule_dimensions)
 
         graph_capsule_output, a_j = self.graph_capsule(hidden_representations, number_of_nodes)
 
@@ -139,18 +127,12 @@ class Model(nn.Module):
         L_c = L_c.sum(dim=1)
         margin_loss = L_c.mean()
 
-        # _, v_max_index = v_mag.max(dim=0)
-        # v_max_index = v_max_index.data
-        # capsule_masked = torch.zeros(capsule_input.size())
-        # capsule_masked[v_max_index, :] = 1
-
         T_c = T_c.unsqueeze(2)
         capsule_masked = capsule_input * T_c
         capsule_masked = capsule_masked.sum(dim=1)
 
         reconstruction_output = F.relu(self.reconstruction_layer_1(capsule_masked))
-        # reconstruction_output = F.relu(self.reconstruction_layer_2(reconstruction_output))
-        reconstruction_output = torch.sigmoid(self.reconstruction_layer_3(reconstruction_output))
+        reconstruction_output = torch.sigmoid(self.reconstruction_layer_2(reconstruction_output))
 
         neg_indicator = torch.where(reconstructs < 1e-5, torch.ones(reconstructs.shape, device=self.device),
                                     torch.zeros(reconstructs.shape, device=self.device))
@@ -164,5 +146,4 @@ class Model(nn.Module):
         reconstruction_loss = torch.mean(pos_loss + neg_loss)
 
         loss = margin_loss + reconstruction_loss * args.reg_scale
-        # reconstruction_loss = torch.sum((reconstruction_output - reconstruction_output) ** 2)
         return loss, margin_loss, reconstruction_loss, pred
